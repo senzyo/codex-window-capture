@@ -27,7 +27,7 @@ jobs:
         shell: pwsh
         run: |
           $bundle = 'dist/bundle'
-          New-Item -ItemType Directory -Force "$bundle/scripts", "$bundle/rust-notices" | Out-Null
+          New-Item -ItemType Directory -Force "$bundle/scripts", "$bundle/rust-notices/licenses" | Out-Null
           Copy-Item -LiteralPath 'target/x86_64-pc-windows-msvc/release/window-capture.exe' -Destination $bundle
           Copy-Item -LiteralPath 'scripts/capture-window.ps1' -Destination "$bundle/scripts"
           Copy-Item -LiteralPath 'AGENTS.md','README.md','LICENSE','THIRD-PARTY-NOTICES.txt' -Destination $bundle
@@ -35,7 +35,7 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw 'Unable to locate Rust distribution notices' }
           $rustDocs = Join-Path $sysroot 'share/doc/rust'
           Copy-Item -LiteralPath (Join-Path $rustDocs 'COPYRIGHT-library.html') -Destination "$bundle/rust-notices"
-          Copy-Item -LiteralPath (Join-Path $rustDocs 'licenses') -Destination "$bundle/rust-notices" -Recurse
+          Copy-Item -Path (Join-Path $rustDocs 'licenses/*') -Destination "$bundle/rust-notices/licenses" -Force
 
           $zip = 'dist/codex-window-capture-windows-x64.zip'
           Compress-Archive -Path "$bundle/*" -DestinationPath $zip -Force
