@@ -1,0 +1,54 @@
+name: Release Windows x64
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Build Windows x64
+        run: cargo build --locked --release --target x86_64-pc-windows-msvc
+
+      - name: Package and checksum
+        shell: pwsh
+        run: |
+          $bundle = 'dist/bundle'
+          New-Item -ItemType Directory -Force "$bundle/scripts", "$bundle/rust-notices" | Out-Null
+          Copy-Item -LiteralPath 'target/x86_64-pc-windows-msvc/release/window-capture.exe' -Destination $bundle
+          Copy-Item -LiteralPath 'scripts/capture-window.ps1' -Destination "$bundle/scripts"
+          Copy-Item -LiteralPath 'AGENTS.md','README.md','LICENSE','THIRD-PARTY-NOTICES.txt' -Destination $bundle
+          $sysroot = rustc --print sysroot
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to locate Rust distribution notices' }
+          $rustDocs = Join-Path $sysroot 'share/doc/rust'
+          Copy-Item -LiteralPath (Join-Path $rustDocs 'COPYRIGHT-library.html') -Destination "$bundle/rust-notices"
+          Copy-Item -LiteralPath (Join-Path $rustDocs 'licenses') -Destination "$bundle/rust-notices" -Recurse
+
+          $zip = 'dist/codex-window-capture-windows-x64.zip'
+          Compress-Archive -Path "$bundle/*" -DestinationPath $zip -Force
+          $checksums = foreach ($asset in @("$bundle/window-capture.exe", $zip)) {
+            $hash = (Get-FileHash -Algorithm SHA256 -LiteralPath $asset).Hash.ToLowerInvariant()
+            '{0}  {1}' -f $hash, [IO.Path]::GetFileName($asset)
+          }
+          $checksums | Set-Content -LiteralPath 'dist/SHA256SUMS.txt' -Encoding ascii
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: pwsh
+        run: |
+          gh release create $env:GITHUB_REF_NAME --repo $env:GITHUB_REPOSITORY --verify-tag --generate-notes `
+            dist/bundle/window-capture.exe dist/codex-window-capture-windows-x64.zip dist/SHA256SUMS.txt

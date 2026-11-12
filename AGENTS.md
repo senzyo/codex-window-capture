@@ -1,0 +1,1 @@
+- 若本机 Windows 10 的 Computer Use 已确认反复截图超时，默认用 `sky.get_window_state({window,include_screenshot:false,include_text:true})` 读控件。需要画面时激活唯一的目标窗口，直接运行 `& "$env:LOCALAPPDATA\codex-window-capture\scripts\capture-window.ps1" -ApplicationPath <目标程序绝对路径> -WindowTitle <当前完整标题>` 并查看返回的 PNG。
