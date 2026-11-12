@@ -1,40 +1,42 @@
 # Codex Window Capture
 
-为部分 **Windows 10 上 Computer Use 能找到窗口、能读控件，但原生截图反复超时** 的用户提供前台单窗口截图。常见报错是 `FrameArrived timed out` 或 `window capture timed out`。原生截图正常的电脑无需安装。本项目在 Windows 10 22H2 x64、Sky 0.7.18 上验证过。
+**English** | [简体中文](README.zh-CN.md)
 
-Codex 继续通过 Sky 读取和操作可访问性控件。需要画面时，独立程序用 Windows Graphics Capture 取帧，回调交出帧后立即返回，由接收线程转换成 PNG。程序不修改 Sky 或桌面应用。它适用于会读取 `AGENTS.md` 且能运行本地 PowerShell 的代理。
+Use this tool to capture a single foreground window on Windows 10 when Computer Use can find the window and read its controls but screenshots repeatedly fail with `FrameArrived timed out` or `window capture timed out`. If native screenshots work, you can skip installation. The tool has been tested on Windows 10 22H2 x64 with Sky 0.7.18.
 
-## 安装
+Codex continues to use Sky to read and interact with accessibility controls. When Codex needs an image, a standalone executable captures a frame with Windows Graphics Capture. The callback hands the frame to a receiving thread and returns immediately. The receiving thread converts the frame to PNG. The tool works without modifying Sky or the desktop app. Agents can use it if they read `AGENTS.md` and can run PowerShell locally.
 
-1. 从本仓库的 **Releases** 下载 `codex-window-capture-windows-x64.zip`。便携包内含 EXE、脚本和规则，无需 Rust。在下载目录用 PowerShell 解压：
+## Installation
+
+1. Download `codex-window-capture-windows-x64.zip` from [Releases](https://github.com/senzyo/codex-window-capture/releases/latest). The portable ZIP includes the executable, the capture script, and the agent instruction. You can use it without installing Rust. Open PowerShell in the download directory and extract the ZIP.
 
    ```powershell
    $install = Join-Path $env:LOCALAPPDATA 'codex-window-capture'
    Expand-Archive -LiteralPath .\codex-window-capture-windows-x64.zip -DestinationPath $install
    ```
 
-2. 把包内 [AGENTS.md](AGENTS.md) 的**一行规则**追加到用户级 `%USERPROFILE%\.codex\AGENTS.md`（自定义 `CODEX_HOME` 时使用该目录下的文件）。保留原有内容。若选了其他安装位置，把规则中的脚本路径一并改好。
-3. 在新的 Codex 会话里照常要求检查某个窗口。代理会直接使用本地截图路径，PNG 保存在安装目录的 `screenshots\`。无需加载额外技能。
+2. Append the English instruction from the bundled [AGENTS.md](AGENTS.md) to your user-level `%USERPROFILE%\.codex\AGENTS.md`, keeping any existing instructions. If you set a custom `CODEX_HOME`, use the `AGENTS.md` in that directory. If you extracted the ZIP elsewhere, update the script path in the instruction to match.
+3. Start a new Codex session and ask it to inspect a window as usual. When the agent needs a screenshot, it runs the local script, which saves the PNG in the installation directory’s `screenshots\` folder. No additional skill is required.
 
-## 手动验证
+## Test a capture
 
 ```powershell
 & "$env:LOCALAPPDATA\codex-window-capture\scripts\capture-window.ps1" `
-    -ApplicationPath "$env:WINDIR\System32\notepad.exe" -WindowTitle '无标题 - 记事本'
+    -ApplicationPath "$env:WINDIR\System32\notepad.exe" -WindowTitle 'Untitled - Notepad'
 ```
 
-把程序路径和完整标题换成实际值。手动从终端执行时，回车后在两秒内切回目标窗口。成功会打印 PNG 路径。窗口须在交互桌面上可见、位于前台且未最小化；同一程序有两个相同标题的可见窗口时，工具会拒绝截图。宿主的桌面访问授权仍然适用。
+Use the actual executable path and the full window title, including any localized text. When running the command from a terminal, switch back to the target window within two seconds of pressing Enter. On success, the script prints the PNG path. The target window must be visible on the interactive desktop, in the foreground, and not minimized. If two visible windows from the same application have the same title, the tool refuses the capture. The host’s desktop access permissions still apply.
 
-此工具只获取图像。它不生成 Sky 的截图 ID，依赖该 ID 的坐标点击仍受原生接口限制。只下载 `window-capture.exe` 的用户也可在其目录运行 `.\window-capture.exe <程序绝对路径> <完整标题> <新PNG路径>`。
+The tool returns an image only. Coordinate clicks that require a Sky screenshot ID still depend on Sky’s native capture. If you downloaded only `window-capture.exe`, run `.\window-capture.exe <absolute-application-path> <full-window-title> <new-png-path>` from its directory.
 
-## 构建与发布
+## Build and release
 
-在 Windows x64 上安装 Rust MSVC 工具链、Visual Studio C++ Build Tools 和 Windows SDK。在仓库根目录运行：
+On Windows x64, install the Rust MSVC toolchain, Visual Studio C++ Build Tools, and the Windows SDK. Run this command from the repository root.
 
 ```powershell
 cargo build --locked --release --target x86_64-pc-windows-msvc
 ```
 
-仓库中的脚本也会查找这份本地构建。维护者将版本标签（例如 `v0.1.0`）推送到 GitHub 后，[发布工作流](.github/workflows/release.yml) 会构建 Windows x64 EXE，发布便携 ZIP 和 `SHA256SUMS.txt`。可用 `Get-FileHash -Algorithm SHA256` 对照下载文件。
+The capture script in the repository also looks for this local build. When a maintainer pushes a version tag such as `v0.1.0` to GitHub, the [release workflow](https://github.com/senzyo/codex-window-capture/blob/main/.github/workflows/release.yml) builds the Windows x64 executable and publishes it with the portable ZIP and `SHA256SUMS.txt`. To verify a download, compare its `Get-FileHash -Algorithm SHA256` output with the matching entry in `SHA256SUMS.txt`.
 
-项目采用 [MIT 许可证](LICENSE)，依赖声明见 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)。
+This project uses the [MIT License](LICENSE). Dependency notices are in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).

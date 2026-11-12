@@ -30,7 +30,7 @@ jobs:
           New-Item -ItemType Directory -Force "$bundle/scripts", "$bundle/rust-notices/licenses" | Out-Null
           Copy-Item -LiteralPath 'target/x86_64-pc-windows-msvc/release/window-capture.exe' -Destination $bundle
           Copy-Item -LiteralPath 'scripts/capture-window.ps1' -Destination "$bundle/scripts"
-          Copy-Item -LiteralPath 'AGENTS.md','README.md','LICENSE','THIRD-PARTY-NOTICES.txt' -Destination $bundle
+          Copy-Item -LiteralPath 'AGENTS.md','README.md','README.zh-CN.md','LICENSE','THIRD-PARTY-NOTICES.txt' -Destination $bundle
           $sysroot = rustc --print sysroot
           if ($LASTEXITCODE -ne 0) { throw 'Unable to locate Rust distribution notices' }
           $rustDocs = Join-Path $sysroot 'share/doc/rust'
