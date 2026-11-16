@@ -15,7 +15,7 @@ Codex continues to use Sky to read and interact with accessibility controls. Whe
    Expand-Archive -LiteralPath .\codex-window-capture-windows-x64.zip -DestinationPath $install
    ```
 
-2. Append the English instruction from the bundled [AGENTS.md](AGENTS.md) to your user-level `%USERPROFILE%\.codex\AGENTS.md`, keeping any existing instructions. If you set a custom `CODEX_HOME`, use the `AGENTS.md` in that directory. If you extracted the ZIP elsewhere, update the script path in the instruction to match.
+2. Copy the current English instruction from the repository's [AGENTS.md](https://github.com/senzyo/codex-window-capture/blob/main/AGENTS.md) into your user-level `%USERPROFILE%\.codex\AGENTS.md`, replacing any previous instruction for this tool and keeping unrelated instructions. Older release ZIPs may contain an earlier instruction. If you set a custom `CODEX_HOME`, use the `AGENTS.md` in that directory. If you extracted the ZIP elsewhere, update the script path in the instruction to match.
 3. Start a new Codex session and ask it to inspect a window as usual. When the agent needs a screenshot, it runs the local script, which saves the PNG in the installation directory’s `screenshots\` folder. No additional skill is required.
 
 ## Test a capture
@@ -28,6 +28,12 @@ Codex continues to use Sky to read and interact with accessibility controls. Whe
 Use the actual executable path and the full window title, including any localized text. When running the command from a terminal, switch back to the target window within two seconds of pressing Enter. On success, the script prints the PNG path. The target window must be visible on the interactive desktop, in the foreground, and not minimized. If two visible windows from the same application have the same title, the tool refuses the capture. The host’s desktop access permissions still apply.
 
 The tool returns an image only. Coordinate clicks that require a Sky screenshot ID still depend on Sky’s native capture. If you downloaded only `window-capture.exe`, run `.\window-capture.exe <absolute-application-path> <full-window-title> <new-png-path>` from its directory.
+
+## Execution context and troubleshooting
+
+Run the script in the interactive user's context outside the command sandbox. In a sandboxed Codex session that permits escalation, use `exec_command` with `sandbox_permissions:"require_escalated"`. In an unsandboxed or full-access session, run it directly and omit that parameter. This setting requests execution outside Codex's sandbox; it does not request Windows administrator elevation. If the session does not permit leaving the sandbox, report the limitation instead of bypassing it.
+
+`No visible foreground window matched the specified application and title` can also indicate that the command's execution context cannot access the target window. If Sky can read the controls, verify the foreground window, actual executable path, and full title, then check which user and desktop context runs the script. In a local comparison on Windows 10 22H2, the same script and target failed under `CodexSandboxOnline` but produced a PNG under the interactive user outside the sandbox. This does not establish that a desktop app update caused the failure. Keep troubleshooting the script's execution context instead of automatically returning to the native capture that was timing out.
 
 ## Build and release
 

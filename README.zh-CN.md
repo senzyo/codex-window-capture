@@ -15,7 +15,7 @@ Codex 继续通过 Sky 读取和操作可访问性控件。需要画面时, 独�
    Expand-Archive -LiteralPath .\codex-window-capture-windows-x64.zip -DestinationPath $install
    ```
 
-2. 把包内 [AGENTS.md](AGENTS.md) 的**英文规则**追加到用户级 `%USERPROFILE%\.codex\AGENTS.md` (自定义 `CODEX_HOME` 时使用该目录下的文件) 。保留原有内容。若选了其他安装位置, 把规则中的脚本路径一并改好。
+2. 把仓库当前 [AGENTS.md](https://github.com/senzyo/codex-window-capture/blob/main/AGENTS.md) 的**英文规则**写入用户级 `%USERPROFILE%\.codex\AGENTS.md` (自定义 `CODEX_HOME` 时使用该目录下的文件) 。已有本工具的旧规则时将其替换, 保留其他指令。旧版 Release ZIP 可能仍包含早期规则。若选了其他安装位置, 把规则中的脚本路径一并改好。
 3. 在新的 Codex 会话里照常要求检查某个窗口。代理会直接使用本地截图路径, PNG 保存在安装目录的 `screenshots\`。无需加载额外技能。
 
 ## 手动验证
@@ -28,6 +28,12 @@ Codex 继续通过 Sky 读取和操作可访问性控件。需要画面时, 独�
 把程序路径和完整标题换成实际值。手动从终端执行时, 回车后在两秒内切回目标窗口。成功会打印 PNG 路径。窗口须在交互桌面上可见、位于前台且未最小化；同一程序有两个相同标题的可见窗口时, 工具会拒绝截图。宿主的桌面访问授权仍然适用。
 
 此工具只获取图像。它不生成 Sky 的截图 ID, 依赖该 ID 的坐标点击仍受原生接口限制。只下载 `window-capture.exe` 的用户也可在其目录运行 `.\window-capture.exe <程序绝对路径> <完整标题> <新PNG路径>`。
+
+## 执行上下文与排查
+
+在命令沙盒外的交互用户上下文运行脚本。有沙盒且允许提权的 Codex 会话中, 为 `exec_command` 设置 `sandbox_permissions:"require_escalated"`。无沙盒或全访问会话中直接运行, 省略该参数。该参数请求在 Codex 沙盒外执行, 不代表请求 Windows 管理员提权。会话不允许退出沙盒时, 应报告限制, 不绕过限制。
+
+`No visible foreground window matched the specified application and title` 也可能表示命令所在的执行上下文无法访问目标窗口。若 Sky 能读到控件, 先核对前台窗口、实际程序路径和完整标题, 再检查脚本的运行用户与桌面上下文。Windows 10 22H2 上的一次本地对照中, 相同脚本和目标在 `CodexSandboxOnline` 下失败, 在沙盒外的交互用户下成功生成 PNG；这不能证明故障由桌面应用更新引起。应继续排查脚本的执行上下文, 不自动退回此前已超时的原生截图。
 
 ## 构建与发布
 
